@@ -30,8 +30,10 @@ desktop.ini
 .env.local
 .env.*.local
 
-# --- Claude Code ---
+# --- Claude Code (personal assets, do NOT commit) ---
 .claude/
+CLAUDE.md
+inbox/
 
 # --- Debug / Test artifacts ---
 *.pdb
