@@ -1,0 +1,142 @@
+.app-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 28px 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.app-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+/* ---- Selector Groups ---- */
+.selector-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.selector-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+}
+
+.selector-row {
+  display: flex;
+  gap: 8px;
+}
+
+.selector-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d1d1d1;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #333;
+  background: #fafafa;
+  outline: none;
+}
+
+.selector-input:focus {
+  border-color: #0078d4;
+}
+
+.selector-btn {
+  padding: 8px 16px;
+  background: #f0f0f0;
+  border: 1px solid #d1d1d1;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.selector-btn:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.selector-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---- Action Buttons ---- */
+.actions-row {
+  display: flex;
+  gap: 12px;
+}
+
+.btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #0078d4;
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #106ebe;
+}
+
+.btn-secondary {
+  background: #f0f0f0;
+  color: #333;
+  border: 1px solid #d1d1d1;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+/* ---- Status Bar ---- */
+.status-bar {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  text-align: center;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-idle {
+  color: #888;
+  background: transparent;
+}
+
+.status-success {
+  color: #107c10;
+  background: #dff6dd;
+}
+
+.status-error {
+  color: #c42b1c;
+  background: #fde7e9;
+}

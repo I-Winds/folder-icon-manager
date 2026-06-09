@@ -1,0 +1,173 @@
+================================================================================
+Folder Icon Manager — 阶段1 MVP 分析报告
+日期：2026-06-08
+================================================================================
+
+1. 项目目标理解
+--------------------------------------------------------------------------------
+一款 Windows 本地桌面工具，核心功能是管理 Windows 文件夹的 ICO 图标。
+通过修改文件夹内的 desktop.ini 来设置/恢复自定义图标，后续阶段扩展图标库
+管理、收藏分组和拖拽操作。
+
+设计原则：简单、高效、高颜值，不做无关功能，不过度设计。
+目标平台：Windows 10 / 11。
+
+2. 推荐技术栈
+--------------------------------------------------------------------------------
+桌面框架 : Tauri v2 (轻量, Rust 后端直接调用 Windows API)
+前端     : React + TypeScript (组件化, 类型安全)
+后端     : Rust (desktop.ini 读写, Explorer 刷新等系统操作)
+包管理   : pnpm (前端) / Cargo (Rust)
+UI 组件  : 原生 CSS / CSS Modules (阶段1 UI 简单, 不引入组件库避免过度设计)
+构建输出 : MSI 安装版 + 便携版
+
+3. 阶段1 MVP 功能范围
+--------------------------------------------------------------------------------
+仅实现 4 个功能:
+
+  (1) 选择目标文件夹  — 系统文件夹选择对话框
+  (2) 选择 ICO 文件   — 文件选择器过滤仅 *.ico
+  (3) 应用图标       — 写入 desktop.ini (引用源 ICO 路径, 禁止复制)
+  (4) 恢复默认图标    — 移除 IconResource 配置, 保留 desktop.ini
+  (5) 刷新 Explorer  — 图标变更立即生效
+
+明确禁止在阶段1实现:
+  图标库、收藏夹、分组、拖拽、UI高级美化
+
+4. 阶段1 计划创建的目录结构
+--------------------------------------------------------------------------------
+folder-icon-manager/
+├── CLAUDE.md
+├── FolderIconManager_Enhanced_PRD.docx
+├── inbox/                              # 分析文档
+├── src-tauri/                          # Tauri Rust 后端
+│   ├── Cargo.toml
+│   ├── tauri.conf.json
+│   ├── build.rs
+│   ├── icons/                          # 应用图标
+│   ├── capabilities/
+│   │   └── default.json                # 权限声明
+│   └── src/
+│       ├── main.rs                     # 入口
+│       └── lib.rs                      # 命令注册 + desktop.ini 读写逻辑
+├── src/                                # React 前端
+│   ├── main.tsx                        # React 入口
+│   ├── App.tsx                         # 根组件
+│   ├── App.css                         # 全局样式
+│   ├── components/
+│   │   ├── FolderSelector.tsx          # 目标文件夹选择
+│   │   ├── IconSelector.tsx            # ICO 文件选择
+│   │   ├── ActionButtons.tsx           # 应用 / 恢复按钮
+│   │   └── StatusBar.tsx              # 操作状态反馈
+│   └── index.css                       # 基础样式（浅色主题）
+├── index.html                          # Vite 入口 HTML
+├── package.json
+├── pnpm-lock.yaml
+├── tsconfig.json
+├── vite.config.ts
+└── .gitignore
+
+5. 阶段1 计划使用的依赖
+--------------------------------------------------------------------------------
+Rust (Cargo.toml):
+  - tauri v2                   框架核心
+  - tauri-plugin-dialog v2     文件/文件夹选择对话框
+  - windows-sys                Windows API 调用 (属性设置 / Explorer 刷新)
+
+前端 (package.json):
+  - react + react-dom          UI 框架
+  - typescript                 类型检查
+  - vite                       构建工具
+  - @tauri-apps/api v2         Tauri 前端 API
+  - @tauri-apps/plugin-dialog  前端调用文件对话框
+  - @types/react + @types/react-dom  React 类型
+
+6. desktop.ini 实现方案
+--------------------------------------------------------------------------------
+核心原则: 引用源 ICO 路径, 不复制 ICO 文件, 不破坏已有的非图标配置。
+
+写入图标流程:
+  1. Rust 端接收目标文件夹路径 + ICO 文件绝对路径
+  2. 读取 {folder}\desktop.ini (不存在则创建)
+  3. 设置文件属性为 SYSTEM | HIDDEN
+  4. 设置文件夹属性包含 FILE_ATTRIBUTE_SYSTEM
+  5. 解析现有 INI 内容 (按 section 拆分)
+  6. 在 [.ShellClassInfo] section 下设置 IconResource={ico_path},0
+  7. 保留所有其他 section 和 key 不变
+  8. 写回文件
+
+恢复默认图标流程:
+  1. 读取 desktop.ini
+  2. 仅移除 [.ShellClassInfo] 下的 IconResource 行
+  3. 保留所有其他内容
+  4. 即使 desktop.ini 全部为空, 也保留该文件 (不删除)
+
+7. Explorer 刷新方案 (推荐方案 B)
+--------------------------------------------------------------------------------
+方案 A : SHChangeNotify(SHCNE_UPDATEITEM, ...) — 精准刷新单个文件夹
+方案 B : SHChangeNotify(SHCNE_ASSOCCHANGED, ...) + IE COM 接口 — 全局刷新 [推荐]
+方案 C : 重启 explorer.exe — 100% 生效但体验差
+
+实现: Rust 调用 shell32.dll 的 SHChangeNotify, 暴露 refresh_explorer
+命令给前端, 在图标操作成功后自动调用。多级策略: 先单文件夹, 不生效则全局。
+
+8. 主要风险点
+--------------------------------------------------------------------------------
+🔴 高风险 (已解决):
+  - desktop.ini 编码问题 → 研究结论: Windows INI API (GetPrivateProfileStringW)
+    仅识别 ANSI(A) 和 UTF-16 LE with BOM 两种编码。UTF-8 不被支持，即使带 BOM。
+    实现方案: 读取时自动检测 BOM (0xFF 0xFE → UTF-16 LE, 否则 ANSI)；
+    写入时始终使用 UTF-16 LE with BOM 以确保最佳兼容性。
+    注意: 不使用 Windows INI API，采用手动文件读写 + 自己的 INI 解析器。
+
+🟡 中风险:
+  - Explorer 刷新不生效: 某些 Windows 版本 SHChangeNotify 不可靠。
+    缓解: 多级刷新策略。
+  - 文件夹属性设置: 忘记设 System 属性导致 desktop.ini 被忽略。
+    缓解: 封装原子操作。
+  - Tauri v2 Windows 环境: VS Build Tools / Windows SDK 配置复杂。
+    缓解: 环境配置文档先行。
+
+🟢 低风险:
+  - desktop.ini 并发写入 (极低概率)
+  - 权限不足 (写前检查 + 友好提示)
+  - 前端与 Rust 状态同步 (单向数据流)
+
+================================================================================
+等待用户确认后进入阶段1编码。
+================================================================================
+
+================================================================================
+阶段1 实施完成记录 (2026-06-09)
+================================================================================
+
+编译环境:
+  - Rust: 1.96.0 (stable-x86_64-pc-windows-gnu)
+  - MinGW-w64: GCC 15.2.0 (via MSYS2)
+  - Node.js: v25.2.1
+  - pnpm: 11.5.2
+
+构建注意事项:
+  - 需设置 CARGO_TARGET_DIR=/tmp/cargo-target 以避免安全软件拦截
+  - 需确保 MinGW bin 在 PATH: /c/msys64/mingw64/bin
+  - 桌面图标使用 `pnpm tauri icon src-tauri/app-icon.png` 生成
+
+编译结果:
+  - cargo check: ✅ 通过
+  - cargo build: ✅ 通过 (195MB debug binary)
+  - cargo test:  ✅ 6/6 通过
+  - pnpm build: ✅ 通过
+
+阶段1 已实现功能:
+  ✅ 选择目标文件夹 (Tauri dialog open directory)
+  ✅ 选择 ICO 文件 (Tauri dialog open file, filter *.ico)
+  ✅ 应用图标 (desktop.ini IconResource 写入, UTF-16 LE BOM)
+  ✅ 恢复默认图标 (移除 IconResource, 保留其他配置, 不删除 desktop.ini)
+  ✅ Explorer 刷新 (SHChangeNotify SHCNE_UPDATEDIR + SHCNE_ASSOCCHANGED)
+
+桌面编码验证结论:
+  GetPrivateProfileStringW 文档明确: 仅支持 ANSI 和 UTF-16 LE (BOM) 两种编码。
+  读取时检测 BOM (0xFF 0xFE → UTF-16 LE; 否则 ANSI处理)。
+  写入时统一使用 UTF-16 LE with BOM 路径确保通用兼容性。
+  来源: Microsoft Win32 API 文档, GetPrivateProfileStringW 编码规范。
+================================================================================

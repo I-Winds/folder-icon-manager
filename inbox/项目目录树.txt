@@ -1,0 +1,62 @@
+folder-icon-manager/
+├── CLAUDE.md                                      # Claude 工作指引（已存在）
+├── FolderIconManager_Enhanced_PRD.docx            # 产品需求文档（已存在）
+├── .gitignore
+│
+├── index.html                                     # Vite 入口 HTML
+├── package.json                                   # 前端依赖声明
+├── pnpm-lock.yaml                                 # 依赖锁定
+├── tsconfig.json                                  # TypeScript 配置
+├── tsconfig.node.json                             # Vite 的 TS 配置
+├── vite.config.ts                                 # Vite 构建配置
+│
+├── scripts/
+│   ├── build.bat                                  # 一键构建脚本
+│   └── dev.bat                                    # 一键开发模式脚本
+│
+├── inbox/
+│   └── stage1-analysis.txt                        # 阶段1 分析报告
+│
+├── src/                                           # ── React 前端 ──
+│   ├── main.tsx                                   # React 入口
+│   ├── vite-env.d.ts                              # Vite 类型声明
+│   ├── index.css                                  # 全局样式（浅色主题）
+│   ├── App.tsx                                    # 根组件（状态管理 + 布局）
+│   ├── App.css                                    # 组件样式
+│   └── components/
+│       ├── FolderSelector.tsx                      # 目标文件夹选择
+│       ├── IconSelector.tsx                        # ICO 文件选择
+│       ├── ActionButtons.tsx                       # 应用 / 恢复按钮
+│       └── StatusBar.tsx                          # 操作状态反馈
+│
+├── dist/                                          # 前端构建产物（Vite 输出）
+│
+└── src-tauri/                                     # ── Tauri Rust 后端 ──
+    ├── Cargo.toml                                 # Rust 依赖声明
+    ├── Cargo.lock                                 # 依赖锁定
+    ├── build.rs                                   # Tauri 构建脚本
+    ├── tauri.conf.json                            # Tauri 窗口/打包配置
+    ├── app-icon.png                               # 图标源文件（1024x1024）
+    │
+    ├── .cargo/
+    │   └── config.toml                            # 构建环境固化（target-dir + linker）
+    │
+    ├── capabilities/
+    │   └── default.json                           # 权限声明（dialog:allow-open）
+    │
+    ├── icons/                                     # Tauri 生成的各平台图标
+    │   ├── 32x32.png
+    │   ├── 128x128.png
+    │   ├── 128x128@2x.png
+    │   ├── icon.ico
+    │   └── ...
+    │
+    ├── gen/schemas/                               # Tauri 生成的权限 schema
+    │
+    └── src/
+        ├── main.rs                                # Rust 入口
+        ├── lib.rs                                 # Tauri Builder + 命令注册
+        └── commands/
+            ├── mod.rs                             # apply_icon / restore_default_icon 命令
+            ├── desktop_ini.rs                     # INI 读写引擎 + 6 个单元测试
+            └── explorer.rs                        # SHChangeNotify Explorer 刷新

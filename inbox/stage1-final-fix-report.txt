@@ -1,0 +1,159 @@
+================================================================================
+Folder Icon Manager — 阶段1 最终修复报告
+日期：2026-06-09
+================================================================================
+
+1. 阶段1 最终修复结果
+--------------------------------------------------------------------------------
+
+代码审查发现两个必须修复的问题，均已修复完毕：
+
+  [修复1] ANSI/GBK 编码 desktop.ini 读取不正确
+    状态: ✅ 已修复
+    影响: 中文 Windows 上手动创建或由其他工具生成的 ANSI 编码 desktop.ini
+          之前会因编码识别失败导致读取乱码或丢失配置
+
+  [修复2] parse_icon_resource 错误删除其他 section 中的 IconResource
+    状态: ✅ 已修复
+    影响: desktop.ini 中 [OtherSection] 下的 IconResource 行之前都会被误删，
+          修复后仅处理 [.ShellClassInfo] section
+
+  修复后验证:
+    - 独立单元测试: 11/11 通过 ✅
+    - cargo check:    通过 ✅
+    - pnpm build:     通过 ✅
+    - cargo test:     环境限制 (STATUS_ENTRYPOINT_NOT_FOUND, 见第5节说明)
+
+2. 本次修复修改的文件列表
+--------------------------------------------------------------------------------
+
+  [修改] src-tauri/Cargo.toml
+    变更: 新增 encoding_rs = "0.8" 依赖
+    原因: 实现真正的 GBK/ANSI 编码解码
+
+  [修改] src-tauri/src/commands/desktop_ini.rs
+    变更:
+      - 新增 decode_desktop_ini_bytes 函数 (24-53行)
+      - 重写 parse_icon_resource 函数 (76-108行)，引入 current_section 跟踪
+      - 新增 5 个单元测试 (test_decode_gbk, test_decode_utf16_le_with_bom,
+        test_decode_plain_ascii, test_parse_icon_resource_preserves_other_section,
+        test_parse_icon_resource_other_section_only,
+        test_parse_icon_resource_multiple_sections,
+        test_build_content_preserves_other_section_iconresource,
+        test_build_content_without_icon_preserves_other_section)
+    原因: 修复编码和 section 解析两个问题
+
+  [新增] d:\tmp\desktop-ini-standalone-test\src\main.rs
+    说明: 独立测试套件 (无 Tauri 依赖)，用于在 cargo test 环境受限时验证逻辑正确性
+
+3. ANSI/GBK 问题最终采用的解决方案
+--------------------------------------------------------------------------------
+
+  3.1 问题根因
+      Windows INI API (GetPrivateProfileStringW) 仅支持两种编码:
+        - UTF-16 LE with BOM (0xFF 0xFE)
+        - ANSI (系统代码页，中文 Windows 为 GBK/CP936)
+      UTF-8 (即使带 BOM) 不被 Windows Shell 识别。
+      原实现使用 String::from_utf8() 直接将字节当 UTF-8 解析，在中文 Windows 上
+      遇到 GBK 编码的 desktop.ini 会返回 None，导致后续操作无法读取已有配置。
+
+  3.2 解决方案
+      实现三级解码策略的 decode_desktop_ini_bytes 函数:
+
+        Level 1 — BOM 检测
+          如果前 2 字节是 0xFF 0xFE → 按 UTF-16 LE 解码
+
+        Level 2 — GBK (ANSI 代码页)
+          非 BOM 文件优先尝试 GBK 解码 (中文 Windows 默认 ANSI)
+          使用 encoding_rs crate 的 gbk 标签
+          只有无解码错误时才采用 (had_errors == false)
+
+        Level 3 — 兜底
+          GBK 解码有错误 → 尝试 UTF-8 fallback
+          UTF-8 失败 → windows-1252 兜底 (单字节映射，永不出错)
+
+  3.3 写入策略
+      始终使用 UTF-16 LE with BOM 写入，确保最佳兼容性。
+      不保留原始编码格式 (统一标准化)。
+
+  3.4 依赖变更
+      新增: encoding_rs = "0.8"
+      该 crate 由 Mozilla 维护，无额外系统依赖，纯 Rust 实现。
+
+4. IconResource 限定在 [.ShellClassInfo] 的实现方式
+--------------------------------------------------------------------------------
+
+  4.1 问题根因
+      原 parse_icon_resource 扫描整个文件的所有行，匹配所有 IconResource= 前缀，
+      不考虑当前所处的 section。如果 desktop.ini 中有其他自定义 section 也使用
+      IconResource key (如 [CustomSection] 下的 IconResource)，这些行会被误删。
+
+  4.2 解决方案
+      引入 current_section 状态变量，逐行跟踪当前所处的 INI section:
+
+        let mut current_section: Option<String> = None;
+
+        for line in content.lines() {
+            // 1. 遇到 [SectionName] 时更新 current_section
+            if line starts with '[' and ends with ']' →
+                current_section = Some(line.to_lowercase())
+                将该行加入 other_lines，continue
+
+            // 2. 判断是否在 [.ShellClassInfo] 内
+            in_shell = current_section == Some("[.shellclassinfo]")
+
+            // 3. 仅在 ShellClassInfo 内且以 iconresource= 开头时剥离
+            if in_shell && line starts with "iconresource=" (case-insensitive) →
+                提取值存入 icon_resource，不加入 other_lines
+
+            // 4. 其他所有行原样保留
+            else → 加入 other_lines
+        }
+
+  4.3 关键行为
+      - 大小写不敏感: current_section 和 key 名均做 to_lowercase 处理
+      - 仅剥离 [.ShellClassInfo] 下的 IconResource (替换或移除场景)
+      - 其他 section 下的 IconResource 行原样保留在 other_lines 中
+      - section header 行本身永远保留
+      - 空白行和不含 section 前缀的内容被作为全局配置保留
+
+  4.4 新增测试覆盖
+      - parse_preserves_other_section:
+        ShellClassInfo 的 IconResource 被提取，OtherSection 的保留
+      - parse_other_section_only:
+        IconResource 仅在非 ShellClassInfo section 时返回 None，行保留
+      - parse_multiple_sections:
+        复杂多 section 文件，仅 ShellClassInfo icon 受影响
+      - restore_preserves_other_section:
+        恢复默认时只影响 ShellClassInfo 的 IconResource
+      - build_content_preserves_other_section_iconresource:
+        应用新图标时 OtherSection 的 IconResource 完整存活
+
+5. 测试执行结果
+--------------------------------------------------------------------------------
+
+  [✅] cargo check
+       耗时: 0.79s
+       结果: Finished `dev` profile, 零错误零警告
+
+  [✅] pnpm build
+       耗时: 101ms
+       结果: dist/ 输出正常 (index.html + CSS + JS)
+
+  [❌] cargo test (Tauri 项目内)
+       错误: exit code 0xc0000139 STATUS_ENTRYPOINT_NOT_FOUND
+       原因: Tauri 测试二进制链接到 WebView2 DLL，当前运行环境缺少
+             WebView2 运行时入口点。此问题在阶段1开发早期即存在，
+             非本次代码修改引入。
+       说明: 编译阶段正常 (test profile 编译成功)，运行时加载 DLL 失败。
+             所有 desktop_ini 单元测试代码不含任何 Tauri 依赖，
+             逻辑正确性已通过独立测试套件验证。
+
+  [✅] 独立测试 (d:\tmp\desktop-ini-standalone-test)
+       结果: 11 passed, 0 failed
+       覆盖: 编码 (GBK/UTF-16 LE/ASCII/Roundtrip/Roundtrip Chinese)
+             Section 解析 (Present/Absent/Preserves Other/Other Only/
+             Multiple Sections)
+             恢复操作 (Preserves Other Section)
+
+================================================================================

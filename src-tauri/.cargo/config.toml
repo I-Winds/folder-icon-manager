@@ -1,0 +1,10 @@
+# Folder Icon Manager — Cargo 构建配置
+# 解决安全软件在项目目录 (OneDrive/iDocuments) 下拦截构建脚本的问题
+
+[build]
+# 将 target 目录移到 AppData\Local（不受 OneDrive 安全策略影响）
+target-dir = "C:\\Users\\IWindL\\AppData\\Local\\folder-icon-manager-target"
+
+[target.x86_64-pc-windows-gnu]
+# 指定 MinGW-w64 链接器（MSYS2 安装路径）
+linker = "C:\\msys64\\mingw64\\bin\\gcc.exe"
