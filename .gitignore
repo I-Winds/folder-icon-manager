@@ -1,0 +1,12 @@
+CLAUDE.md
+.claude/
+AGENTS.md
+.agents/
+.codex/
+_ai_temp/
+inbox/
+project-audit/
+bin/
+obj/
+.vs/
+TestResults/
