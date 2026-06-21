@@ -4,8 +4,8 @@
         Title="Folder Icon Manager"
         Width="720"
         MinWidth="620"
-        Height="540"
-        MinHeight="500"
+        Height="600"
+        MinHeight="580"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource CanvasBrush}">
     <Grid Background="{StaticResource CanvasBrush}">
@@ -104,50 +104,30 @@
                 </StackPanel>
 
                 <Border Grid.Row="8"
-                        MinHeight="64"
-                        Padding="12,8"
+                        MinHeight="40"
+                        Padding="12,9"
                         Background="#F8FAFC"
                         BorderBrush="{StaticResource BorderBrush}"
                         BorderThickness="1"
                         CornerRadius="6">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="6" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="{Binding StatusTitle}"
-                                   FontSize="13"
-                                   FontWeight="SemiBold">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsStatusSuccess}" Value="True">
-                                            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding IsStatusError}" Value="True">
-                                            <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                        <TextBlock Grid.Column="1"
-                                   Text="{Binding StatusTime}"
-                                   FontSize="12"
-                                   Foreground="{StaticResource MutedTextBrush}" />
-                        <TextBlock Grid.Row="2"
-                                   Grid.ColumnSpan="2"
-                                   Text="{Binding StatusDetail}"
-                                   FontSize="12"
-                                   Foreground="{StaticResource MutedTextBrush}"
-                                   TextTrimming="CharacterEllipsis" />
-                    </Grid>
+                    <TextBlock Text="{Binding StatusText}"
+                               ToolTip="{Binding StatusText}"
+                               FontSize="13"
+                               TextTrimming="CharacterEllipsis">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsStatusSuccess}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsStatusError}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </Border>
             </Grid>
         </Border>
