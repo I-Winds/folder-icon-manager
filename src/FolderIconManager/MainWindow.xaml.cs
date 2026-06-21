@@ -25,7 +25,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = new MainWindowViewModel(
-            new FolderIconService(new FolderPathValidator(), new DesktopIniEditor(), new ShellNotifier()));
+            new FolderIconService(new FolderPathValidator(), new DesktopIniEditor()));
     }
 
     private void ChooseFolder_Click(object sender, RoutedEventArgs e)

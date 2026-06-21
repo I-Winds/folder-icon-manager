@@ -5,17 +5,6 @@ namespace FolderIconManager.Tests;
 public sealed class FolderIconServiceTests
 {
     [Fact]
-    public void ShellNotifier_RefreshFolder_DoesNotThrowForExistingDirectory()
-    {
-        using var workspace = new TestWorkspace();
-        var folder = workspace.CreateDirectory("目标");
-
-        var exception = Record.Exception(() => new ShellNotifier().RefreshFolder(folder));
-
-        Assert.Null(exception);
-    }
-
-    [Fact]
     public void Apply_MapsUnauthorizedAccessToShortStatusMessage()
     {
         using var workspace = new TestWorkspace();
@@ -23,8 +12,7 @@ public sealed class FolderIconServiceTests
         var iconPath = workspace.CreateFile("蓝色.ico");
         var service = new FolderIconService(
             new FolderPathValidator(),
-            new ThrowingDesktopIniEditor(),
-            new RecordingShellNotifier());
+            new ThrowingDesktopIniEditor());
 
         var result = service.Apply(folder, iconPath);
 
@@ -40,8 +28,7 @@ public sealed class FolderIconServiceTests
         var iconPath = workspace.CreateFile("蓝色.ico");
         var service = new FolderIconService(
             new FolderPathValidator(),
-            new IoFailingDesktopIniEditor(),
-            new RecordingShellNotifier());
+            new IoFailingDesktopIniEditor());
 
         var result = service.Apply(folder, iconPath);
 
@@ -50,70 +37,55 @@ public sealed class FolderIconServiceTests
     }
 
     [Fact]
-    public void Apply_MapsShellRefreshFailureToShortStatusMessage()
+    public void Apply_MapsShellApiFailureToShortStatusMessage()
     {
         using var workspace = new TestWorkspace();
         var folder = workspace.CreateDirectory("目标");
         var iconPath = workspace.CreateFile("蓝色.ico");
         var service = new FolderIconService(
             new FolderPathValidator(),
-            new DesktopIniEditor(),
-            new ThrowingShellNotifier());
+            new ThrowingExternalDesktopIniEditor());
 
         var result = service.Apply(folder, iconPath);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Shell 刷新失败或未能立即生效。", result.Message);
+        Assert.Equal("Shell 设置文件夹图标失败。", result.Message);
     }
 
     [Fact]
-    public void Restore_RemovesIconResourceAndNotifiesShell()
+    public void Restore_WritesEmptyIconResource()
     {
         using var workspace = new TestWorkspace();
         var folder = workspace.CreateDirectory("目标");
         var iconPath = workspace.CreateFile("蓝色.ico");
         var editor = new DesktopIniEditor();
         editor.SetIconResource(folder, iconPath);
-        var notifier = new RecordingShellNotifier();
-        var service = new FolderIconService(new FolderPathValidator(), editor, notifier);
+        var service = new FolderIconService(new FolderPathValidator(), editor);
 
         var result = service.Restore(folder);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("已恢复默认图标，已通知资源管理器刷新。", result.Message);
-        Assert.DoesNotContain("IconResource=", File.ReadAllText(Path.Combine(folder, "desktop.ini")));
-        Assert.Equal(folder, notifier.LastRefreshedFolder);
+        Assert.Equal("已恢复默认图标。", result.Message);
+        Assert.Contains("IconResource=,0", File.ReadAllText(Path.Combine(folder, "desktop.ini")));
     }
 
     [Fact]
-    public void Apply_UsesOriginalIconPathMarksFolderAndNotifiesShell()
+    public void Apply_UsesOriginalIconPathAndMarksFolder()
     {
         using var workspace = new TestWorkspace();
         var folder = workspace.CreateDirectory("目标");
         var iconPath = workspace.CreateFile("蓝色.ico");
-        var notifier = new RecordingShellNotifier();
-        var service = new FolderIconService(new FolderPathValidator(), new DesktopIniEditor(), notifier);
+        var service = new FolderIconService(new FolderPathValidator(), new DesktopIniEditor());
 
         var result = service.Apply(folder, iconPath);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("图标已应用，已通知资源管理器刷新。", result.Message);
+        Assert.Equal("图标已应用。", result.Message);
         Assert.Contains(
             $"IconResource={Path.GetFullPath(iconPath)},0",
             File.ReadAllText(Path.Combine(folder, "desktop.ini")));
         Assert.False(File.Exists(Path.Combine(folder, Path.GetFileName(iconPath))));
-        Assert.Equal(folder, notifier.LastRefreshedFolder);
         Assert.True((File.GetAttributes(folder) & FileAttributes.System) != 0);
-    }
-
-    private sealed class RecordingShellNotifier : IShellNotifier
-    {
-        public string? LastRefreshedFolder { get; private set; }
-
-        public void RefreshFolder(string folderPath)
-        {
-            LastRefreshedFolder = folderPath;
-        }
     }
 
     private sealed class ThrowingDesktopIniEditor : IDesktopIniEditor
@@ -142,9 +114,14 @@ public sealed class FolderIconServiceTests
         }
     }
 
-    private sealed class ThrowingShellNotifier : IShellNotifier
+    private sealed class ThrowingExternalDesktopIniEditor : IDesktopIniEditor
     {
-        public void RefreshFolder(string folderPath)
+        public void SetIconResource(string folderPath, string iconPath)
+        {
+            throw new System.Runtime.InteropServices.ExternalException();
+        }
+
+        public void RemoveIconResource(string folderPath)
         {
             throw new System.Runtime.InteropServices.ExternalException();
         }

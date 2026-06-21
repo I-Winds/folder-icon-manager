@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using System.IO;
 using FolderIconManager.Models;
 using FolderIconManager.Services;
 
@@ -9,8 +10,11 @@ public sealed class MainWindowViewModel : ObservableObject
     private readonly IFolderIconService _folderIconService;
     private string _targetFolderPath = string.Empty;
     private string _iconPath = string.Empty;
-    private string _statusText = "请选择目标文件夹和 ICO 图标。";
+    private string _statusTitle = "等待操作";
+    private string _statusDetail = "请选择目标文件夹和 ICO 图标。";
+    private string _statusTime = string.Empty;
     private bool _isStatusSuccess;
+    private bool _isStatusError;
 
     public MainWindowViewModel(IFolderIconService folderIconService)
     {
@@ -31,10 +35,22 @@ public sealed class MainWindowViewModel : ObservableObject
         set => SetProperty(ref _iconPath, value);
     }
 
-    public string StatusText
+    public string StatusTitle
     {
-        get => _statusText;
-        private set => SetProperty(ref _statusText, value);
+        get => _statusTitle;
+        private set => SetProperty(ref _statusTitle, value);
+    }
+
+    public string StatusDetail
+    {
+        get => _statusDetail;
+        private set => SetProperty(ref _statusDetail, value);
+    }
+
+    public string StatusTime
+    {
+        get => _statusTime;
+        private set => SetProperty(ref _statusTime, value);
     }
 
     public bool IsStatusSuccess
@@ -43,17 +59,56 @@ public sealed class MainWindowViewModel : ObservableObject
         private set => SetProperty(ref _isStatusSuccess, value);
     }
 
+    public bool IsStatusError
+    {
+        get => _isStatusError;
+        private set => SetProperty(ref _isStatusError, value);
+    }
+
     public ICommand ApplyCommand { get; }
 
     public ICommand RestoreCommand { get; }
 
-    private void Apply() => ShowResult(_folderIconService.Apply(TargetFolderPath, IconPath));
-
-    private void Restore() => ShowResult(_folderIconService.Restore(TargetFolderPath));
-
-    private void ShowResult(OperationResult result)
+    private void Apply()
     {
-        StatusText = result.Message;
+        var iconName = Path.GetFileName(IconPath);
+        ShowProcessing("正在应用图标", string.IsNullOrEmpty(iconName) ? "正在检查 ICO 图标。" : iconName);
+        ShowResult(
+            _folderIconService.Apply(TargetFolderPath, IconPath),
+            "图标已应用",
+            "应用失败",
+            string.IsNullOrEmpty(iconName) ? "已应用自定义图标。" : iconName);
+    }
+
+    private void Restore()
+    {
+        ShowProcessing("正在恢复默认图标", "正在移除自定义图标。" );
+        ShowResult(
+            _folderIconService.Restore(TargetFolderPath),
+            "已恢复默认图标",
+            "恢复失败",
+            "已移除自定义图标。");
+    }
+
+    private void ShowProcessing(string title, string detail)
+    {
+        StatusTitle = title;
+        StatusDetail = detail;
+        StatusTime = string.Empty;
+        IsStatusSuccess = false;
+        IsStatusError = false;
+    }
+
+    private void ShowResult(
+        OperationResult result,
+        string successTitle,
+        string errorTitle,
+        string successDetail)
+    {
+        StatusTitle = result.IsSuccess ? successTitle : errorTitle;
+        StatusDetail = result.IsSuccess ? successDetail : result.Message;
+        StatusTime = DateTime.Now.ToString("HH:mm:ss");
         IsStatusSuccess = result.IsSuccess;
+        IsStatusError = !result.IsSuccess;
     }
 }

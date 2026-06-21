@@ -5,7 +5,7 @@ namespace FolderIconManager.Tests;
 public sealed class DesktopIniEditorTests
 {
     [Fact]
-    public void RemoveIconResource_LeavesOtherShellClassInfoKeysAndDesktopIniFile()
+    public void RemoveIconResource_WritesEmptyIconResource()
     {
         using var workspace = new TestWorkspace();
         var folder = workspace.CreateDirectory("目标");
@@ -20,7 +20,7 @@ public sealed class DesktopIniEditorTests
         Assert.True(File.Exists(desktopIniPath));
         Assert.Contains("[.ShellClassInfo]", text);
         Assert.Contains("InfoTip=保留", text);
-        Assert.DoesNotContain("IconResource=", text);
+        Assert.Contains("IconResource=,0", text);
     }
 
     [Fact]

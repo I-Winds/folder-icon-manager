@@ -34,7 +34,7 @@
                                FontWeight="SemiBold"
                                Foreground="{StaticResource TextBrush}" />
                     <TextBlock Margin="0,8,0,0"
-                               Text="选择一个非 C 盘文件夹和 ICO 图标，然后立即应用。"
+                               Text="C 盘仅支持桌面文件夹及其子文件夹，其他本地磁盘不受限制。"
                                FontSize="14"
                                Foreground="{StaticResource MutedTextBrush}" />
                 </StackPanel>
@@ -104,27 +104,50 @@
                 </StackPanel>
 
                 <Border Grid.Row="8"
-                        Padding="12,10"
+                        MinHeight="64"
+                        Padding="12,8"
                         Background="#F8FAFC"
                         BorderBrush="{StaticResource BorderBrush}"
                         BorderThickness="1"
                         CornerRadius="6">
-                    <TextBlock Text="{Binding StatusText}"
-                               FontSize="13">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsStatusSuccess}" Value="True">
-                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding IsStatusSuccess}" Value="False">
-                                        <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="6" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding StatusTitle}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsStatusSuccess}" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsStatusError}" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding StatusTime}"
+                                   FontSize="12"
+                                   Foreground="{StaticResource MutedTextBrush}" />
+                        <TextBlock Grid.Row="2"
+                                   Grid.ColumnSpan="2"
+                                   Text="{Binding StatusDetail}"
+                                   FontSize="12"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   TextTrimming="CharacterEllipsis" />
+                    </Grid>
                 </Border>
             </Grid>
         </Border>

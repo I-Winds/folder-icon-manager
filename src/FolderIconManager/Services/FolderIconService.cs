@@ -7,16 +7,13 @@ public sealed class FolderIconService : IFolderIconService
 {
     private readonly FolderPathValidator _validator;
     private readonly IDesktopIniEditor _desktopIniEditor;
-    private readonly IShellNotifier _shellNotifier;
 
     public FolderIconService(
         FolderPathValidator validator,
-        IDesktopIniEditor desktopIniEditor,
-        IShellNotifier shellNotifier)
+        IDesktopIniEditor desktopIniEditor)
     {
         _validator = validator;
         _desktopIniEditor = desktopIniEditor;
-        _shellNotifier = shellNotifier;
     }
 
     public OperationResult Apply(string? folderPath, string? iconPath)
@@ -35,11 +32,10 @@ public sealed class FolderIconService : IFolderIconService
 
         try
         {
-            _desktopIniEditor.SetIconResource(folderPath!, iconPath!);
             File.SetAttributes(
                 folderPath!,
                 File.GetAttributes(folderPath!) | FileAttributes.System);
-            _shellNotifier.RefreshFolder(folderPath!);
+            _desktopIniEditor.SetIconResource(folderPath!, iconPath!);
         }
         catch (UnauthorizedAccessException)
         {
@@ -51,10 +47,10 @@ public sealed class FolderIconService : IFolderIconService
         }
         catch (System.Runtime.InteropServices.ExternalException)
         {
-            return new OperationResult(false, "Shell 刷新失败或未能立即生效。");
+            return new OperationResult(false, "Shell 设置文件夹图标失败。" );
         }
 
-        return new OperationResult(true, "图标已应用，已通知资源管理器刷新。");
+        return new OperationResult(true, "图标已应用。");
     }
 
     public OperationResult Restore(string? folderPath)
@@ -65,9 +61,23 @@ public sealed class FolderIconService : IFolderIconService
             return targetValidation;
         }
 
-        _desktopIniEditor.RemoveIconResource(folderPath!);
-        _shellNotifier.RefreshFolder(folderPath!);
+        try
+        {
+            _desktopIniEditor.RemoveIconResource(folderPath!);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return new OperationResult(false, "没有写入权限。");
+        }
+        catch (IOException)
+        {
+            return new OperationResult(false, "写入 desktop.ini 失败。");
+        }
+        catch (System.Runtime.InteropServices.ExternalException)
+        {
+            return new OperationResult(false, "Shell 恢复默认图标失败。" );
+        }
 
-        return new OperationResult(true, "已恢复默认图标，已通知资源管理器刷新。");
+        return new OperationResult(true, "已恢复默认图标。");
     }
 }
