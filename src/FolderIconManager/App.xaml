@@ -7,6 +7,8 @@
         <Color x:Key="CanvasColor">#F3F5F7</Color>
         <Color x:Key="SurfaceColor">#FFFFFF</Color>
         <Color x:Key="BorderColor">#D9E0E6</Color>
+        <Color x:Key="DropZoneColor">#FAFBFC</Color>
+        <Color x:Key="DropZoneActiveColor">#EFF6FF</Color>
         <Color x:Key="TextColor">#18212B</Color>
         <Color x:Key="MutedTextColor">#687583</Color>
         <Color x:Key="AccentColor">#1667C8</Color>
@@ -17,6 +19,8 @@
         <SolidColorBrush x:Key="CanvasBrush" Color="{StaticResource CanvasColor}" />
         <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
         <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+        <SolidColorBrush x:Key="DropZoneBrush" Color="{StaticResource DropZoneColor}" />
+        <SolidColorBrush x:Key="DropZoneActiveBrush" Color="{StaticResource DropZoneActiveColor}" />
         <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}" />
         <SolidColorBrush x:Key="MutedTextBrush" Color="{StaticResource MutedTextColor}" />
         <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
@@ -25,23 +29,28 @@
         <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}" />
 
         <Style x:Key="PathTextBoxStyle" TargetType="TextBox">
-            <Setter Property="Height" Value="42" />
+            <Setter Property="Height" Value="38" />
             <Setter Property="Padding" Value="12,0" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-            <Setter Property="Background" Value="#F8FAFC" />
+            <Setter Property="Background" Value="White" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
         </Style>
 
         <Style x:Key="SecondaryButtonStyle" TargetType="Button">
-            <Setter Property="Height" Value="42" />
+            <Setter Property="Height" Value="40" />
             <Setter Property="Padding" Value="18,0" />
             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
             <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Cursor" Value="Hand" />
+        </Style>
+
+        <Style x:Key="BrowseButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Padding" Value="12,0" />
         </Style>
 
         <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">

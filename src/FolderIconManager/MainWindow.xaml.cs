@@ -19,9 +19,6 @@ namespace FolderIconManager;
 /// </summary>
 public partial class MainWindow : Window
 {
-    private static readonly Brush DropBackgroundBrush = new SolidColorBrush(Color.FromRgb(239, 246, 255));
-    private static readonly Brush DefaultPathBackgroundBrush = new SolidColorBrush(Color.FromRgb(248, 250, 252));
-
     private MainWindowViewModel ViewModel => (MainWindowViewModel)DataContext;
 
     public MainWindow()
@@ -54,51 +51,43 @@ public partial class MainWindow : Window
         }
     }
 
-    private void PathTextBox_PreviewDragEnter(object sender, DragEventArgs e)
+    private void DropZone_PreviewDragEnter(object sender, DragEventArgs e)
     {
-        UpdateDragState(sender as TextBox, e);
+        UpdateDropZoneState(sender as Border, e);
     }
 
-    private void PathTextBox_PreviewDragOver(object sender, DragEventArgs e)
+    private void DropZone_PreviewDragOver(object sender, DragEventArgs e)
     {
-        UpdateDragState(sender as TextBox, e);
+        UpdateDropZoneState(sender as Border, e);
     }
 
-    private void PathTextBox_PreviewDragLeave(object sender, DragEventArgs e)
+    private void DropZone_PreviewDragLeave(object sender, DragEventArgs e)
     {
-        ResetDragState(sender as TextBox);
+        ResetDropZoneState(sender as Border);
         e.Handled = true;
     }
 
-    private void TargetFolderPathTextBox_Drop(object sender, DragEventArgs e)
+    private void TargetFolderDropZone_Drop(object sender, DragEventArgs e)
     {
-        ResetDragState(sender as TextBox);
+        ResetDropZoneState(sender as Border);
 
         if (TryGetSingleDroppedPath(e, out var path) && System.IO.Directory.Exists(path))
         {
             ViewModel.TargetFolderPath = path;
         }
-        else
-        {
-            ViewModel.ShowDropError("请选择一个存在的文件夹。");
-        }
 
         e.Handled = true;
     }
 
-    private void IconPathTextBox_Drop(object sender, DragEventArgs e)
+    private void IconDropZone_Drop(object sender, DragEventArgs e)
     {
-        ResetDragState(sender as TextBox);
+        ResetDropZoneState(sender as Border);
 
         if (TryGetSingleDroppedPath(e, out var path) &&
             System.IO.File.Exists(path) &&
             string.Equals(System.IO.Path.GetExtension(path), ".ico", StringComparison.OrdinalIgnoreCase))
         {
             ViewModel.IconPath = path;
-        }
-        else
-        {
-            ViewModel.ShowDropError("请选择一个存在的 ICO 文件。");
         }
 
         e.Handled = true;
@@ -119,43 +108,42 @@ public partial class MainWindow : Window
         return true;
     }
 
-    private void UpdateDragState(TextBox? textBox, DragEventArgs e)
+    private void UpdateDropZoneState(Border? dropZone, DragEventArgs e)
     {
-        if (textBox is null)
+        if (dropZone is null)
         {
             e.Effects = DragDropEffects.None;
             e.Handled = true;
             return;
         }
 
-        var hasFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
         var acceptsDrop = TryGetSingleDroppedPath(e, out var path) &&
-            ((textBox == TargetFolderPathTextBox && System.IO.Directory.Exists(path)) ||
-             (textBox == IconPathTextBox && System.IO.File.Exists(path) &&
+            ((dropZone == TargetFolderDropZone && System.IO.Directory.Exists(path)) ||
+             (dropZone == IconDropZone && System.IO.File.Exists(path) &&
               string.Equals(System.IO.Path.GetExtension(path), ".ico", StringComparison.OrdinalIgnoreCase)));
 
-        e.Effects = hasFileDrop ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Effects = acceptsDrop ? DragDropEffects.Copy : DragDropEffects.None;
         if (acceptsDrop)
         {
-            textBox.Background = DropBackgroundBrush;
-            textBox.BorderBrush = (Brush)FindResource("AccentBrush");
+            dropZone.Background = (Brush)FindResource("DropZoneActiveBrush");
+            dropZone.BorderBrush = (Brush)FindResource("AccentBrush");
         }
         else
         {
-            ResetDragState(textBox);
+            ResetDropZoneState(dropZone);
         }
 
         e.Handled = true;
     }
 
-    private void ResetDragState(TextBox? textBox)
+    private void ResetDropZoneState(Border? dropZone)
     {
-        if (textBox is null)
+        if (dropZone is null)
         {
             return;
         }
 
-        textBox.Background = DefaultPathBackgroundBrush;
-        textBox.BorderBrush = (Brush)FindResource("BorderBrush");
+        dropZone.Background = (Brush)FindResource("DropZoneBrush");
+        dropZone.BorderBrush = (Brush)FindResource("BorderBrush");
     }
 }
