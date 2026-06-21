@@ -55,6 +55,13 @@ public sealed class MainWindowViewModel : ObservableObject
 
     public ICommand RestoreCommand { get; }
 
+    public void ShowDropError(string message)
+    {
+        StatusText = $"拖入失败：{message}";
+        IsStatusSuccess = false;
+        IsStatusError = true;
+    }
+
     private void Apply()
     {
         var iconName = Path.GetFileName(IconPath);

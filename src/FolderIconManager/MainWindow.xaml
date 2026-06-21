@@ -56,8 +56,14 @@
                                Foreground="{StaticResource TextBrush}" />
                     <TextBox Grid.Row="2"
                              Grid.Column="0"
+                             x:Name="TargetFolderPathTextBox"
                              Style="{StaticResource PathTextBoxStyle}"
                              IsReadOnly="True"
+                             AllowDrop="True"
+                             PreviewDragEnter="PathTextBox_PreviewDragEnter"
+                             PreviewDragOver="PathTextBox_PreviewDragOver"
+                             PreviewDragLeave="PathTextBox_PreviewDragLeave"
+                             Drop="TargetFolderPathTextBox_Drop"
                              Text="{Binding TargetFolderPath, Mode=OneWay}" />
                     <Button Grid.Row="2"
                             Grid.Column="2"
@@ -83,8 +89,14 @@
                                Foreground="{StaticResource TextBrush}" />
                     <TextBox Grid.Row="2"
                              Grid.Column="0"
+                             x:Name="IconPathTextBox"
                              Style="{StaticResource PathTextBoxStyle}"
                              IsReadOnly="True"
+                             AllowDrop="True"
+                             PreviewDragEnter="PathTextBox_PreviewDragEnter"
+                             PreviewDragOver="PathTextBox_PreviewDragOver"
+                             PreviewDragLeave="PathTextBox_PreviewDragLeave"
+                             Drop="IconPathTextBox_Drop"
                              Text="{Binding IconPath, Mode=OneWay}" />
                     <Button Grid.Row="2"
                             Grid.Column="2"
