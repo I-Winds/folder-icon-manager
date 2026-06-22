@@ -7,10 +7,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{288B22C4-904
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FolderIconManager", "src\FolderIconManager\FolderIconManager.csproj", "{B612E19F-C3E0-4C46-8EA8-6FE0B7CD2D1F}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{CB5212E9-4173-4746-AB55-53CDE2144847}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FolderIconManager.Tests", "tests\FolderIconManager.Tests\FolderIconManager.Tests.csproj", "{4A5B5405-83FB-4365-86FD-46A30699A6A2}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,13 +20,8 @@ Global
 		{B612E19F-C3E0-4C46-8EA8-6FE0B7CD2D1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B612E19F-C3E0-4C46-8EA8-6FE0B7CD2D1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B612E19F-C3E0-4C46-8EA8-6FE0B7CD2D1F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4A5B5405-83FB-4365-86FD-46A30699A6A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4A5B5405-83FB-4365-86FD-46A30699A6A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4A5B5405-83FB-4365-86FD-46A30699A6A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4A5B5405-83FB-4365-86FD-46A30699A6A2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{B612E19F-C3E0-4C46-8EA8-6FE0B7CD2D1F} = {288B22C4-904E-4E72-8E88-E427A75A907E}
-		{4A5B5405-83FB-4365-86FD-46A30699A6A2} = {CB5212E9-4173-4746-AB55-53CDE2144847}
 	EndGlobalSection
 EndGlobal

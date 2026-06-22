@@ -18,6 +18,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private bool _isStatusError;
     private FavoriteFolderItem? _selectedFavoriteFolder;
     private FavoriteIconItem? _selectedFavoriteIcon;
+    private FavoriteIconItem? _currentPreviewIcon;
 
     public MainWindowViewModel(
         IFolderIconService folderIconService,
@@ -33,13 +34,25 @@ public sealed class MainWindowViewModel : ObservableObject
     public string TargetFolderPath
     {
         get => _targetFolderPath;
-        set => SetProperty(ref _targetFolderPath, value);
+        set
+        {
+            if (SetProperty(ref _targetFolderPath, value))
+            {
+                OnPropertyChanged(nameof(CanRevealTargetFolder));
+            }
+        }
     }
 
     public string IconPath
     {
         get => _iconPath;
-        set => SetProperty(ref _iconPath, value);
+        set
+        {
+            if (SetProperty(ref _iconPath, value))
+            {
+                CurrentPreviewIcon = File.Exists(value) ? new FavoriteIconItem(value) : null;
+            }
+        }
     }
 
     public string StatusText
@@ -84,19 +97,35 @@ public sealed class MainWindowViewModel : ObservableObject
                 if (value is not null)
                 {
                     IconPath = value.IconPath;
+                    CurrentPreviewIcon = value;
                 }
 
                 OnPropertyChanged(nameof(FavoritePreviewDescription));
+            }
+        }
+    }
+
+    public FavoriteIconItem? CurrentPreviewIcon
+    {
+        get => _currentPreviewIcon;
+        private set
+        {
+            if (SetProperty(ref _currentPreviewIcon, value))
+            {
+                OnPropertyChanged(nameof(FavoritePreviewDescription));
+                OnPropertyChanged(nameof(CanOpenCurrentPreviewIcon));
                 OnPropertyChanged(nameof(CanOpenSelectedFavoriteIcon));
             }
         }
     }
 
-    public string FavoritePreviewDescription => SelectedFavoriteFolder is not null && SelectedFavoriteIcon is not null
-        ? $"{SelectedFavoriteFolder.DisplayName} / {SelectedFavoriteIcon.FileName}"
-        : string.Empty;
+    public string FavoritePreviewDescription => CurrentPreviewIcon?.FileName ?? string.Empty;
 
-    public bool CanOpenSelectedFavoriteIcon => SelectedFavoriteIcon is not null && File.Exists(SelectedFavoriteIcon.IconPath);
+    public bool CanRevealTargetFolder => Directory.Exists(TargetFolderPath);
+
+    public bool CanOpenCurrentPreviewIcon => CurrentPreviewIcon is not null && File.Exists(CurrentPreviewIcon.IconPath);
+
+    public bool CanOpenSelectedFavoriteIcon => CanOpenCurrentPreviewIcon;
 
     public ICommand ApplyCommand { get; }
 
@@ -209,9 +238,30 @@ public sealed class MainWindowViewModel : ObservableObject
         Apply();
     }
 
-    public void OpenSelectedFavoriteIconLocation()
+    public void RevealTargetFolder()
     {
-        var iconPath = SelectedFavoriteIcon?.IconPath;
+        if (!CanRevealTargetFolder)
+        {
+            ShowFavoriteError("目标文件夹不存在。");
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{TargetFolderPath}\"")
+            {
+                UseShellExecute = true
+            });
+        }
+        catch (Exception)
+        {
+            ShowFavoriteError("无法打开目标文件夹所在目录。");
+        }
+    }
+
+    public void OpenCurrentPreviewIconLocation()
+    {
+        var iconPath = CurrentPreviewIcon?.IconPath;
         if (string.IsNullOrWhiteSpace(iconPath) || !File.Exists(iconPath))
         {
             ShowFavoriteError("ICO 图标文件不存在。");

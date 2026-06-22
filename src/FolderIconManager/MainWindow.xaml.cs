@@ -159,9 +159,14 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OpenSelectedFavoriteIconLocation_Click(object sender, RoutedEventArgs e)
+    private void OpenCurrentPreviewIconLocation_Click(object sender, RoutedEventArgs e)
     {
-        ViewModel.OpenSelectedFavoriteIconLocation();
+        ViewModel.OpenCurrentPreviewIconLocation();
+    }
+
+    private void RevealTargetFolder_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel.RevealTargetFolder();
     }
 
     private void FavoriteIcons_MouseDoubleClick(object sender, MouseButtonEventArgs e)
